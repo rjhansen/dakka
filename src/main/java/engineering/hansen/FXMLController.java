@@ -44,20 +44,33 @@ public class FXMLController {
     }
 
     protected void parseXML() {
+        File shipfile;
         try {
-            if (System.getenv("HOME") == null)
+            if ((System.getenv("HOME") == null) &&
+                    System.getenv("LOCALAPPDATA") == null)
                 throw new NoHomeDir();
-            if (!Paths.get(System.getenv("HOME"), ".config").toFile().exists())
-                throw new NoConfigDir();
-            var _ = new java.io.File(Paths.get(System.getenv("HOME"),
-                    ".config", "dakka").toString()).mkdir();
-            var shipfile = new File(Paths.get(System.getenv("HOME"),
-                            ".config",
-                            "dakka",
-                            "ships.xml")
-                    .toString());
+
+            if (System.getenv("LOCALAPPDATA") == null) {
+                // assume we're on Linux or MacOS
+                var homedir = System.getenv("HOME");
+                if (!Paths.get(homedir, ".config").toFile().exists())
+                    throw new NoConfigDir();
+                var _ = new java.io.File(Paths.get(homedir, ".config",
+                        "dakka").toString()).mkdir();
+                shipfile = new File(Paths.get(homedir, ".config",
+                        "dakka", "ships.xml").toString());
+            } else {
+                // assume we're on Windows
+                var homedir = System.getenv("LOCALAPPDATA");
+                var _ = new File(Paths.get(homedir, "dakka").toString())
+                        .mkdir();
+                shipfile = new File(Paths.get(homedir, "dakka",
+                        "ships.xml").toString());
+            }
             if (!shipfile.exists())
                 throw new NoShipsFound();
+
+            System.err.println("shipfile = " + shipfile.toString());
 
             shipdoc = DocumentBuilderFactory
                     .newInstance()
@@ -99,6 +112,7 @@ public class FXMLController {
                     break;
                 default:
                     crashNicely("Unknown", e.toString(), "");
+                    e.printStackTrace();
                     break;
             }
         }
