@@ -18,6 +18,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.web.WebView?>
 
 <VBox fx:id="mainWindow" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="400.0" minWidth="600.0" prefHeight="750.0" prefWidth="902.0" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="engineering.hansen.FXMLController">
@@ -66,7 +67,7 @@
                   <Label text="Range" GridPane.rowIndex="3" />
                   <Label text="Aspect" GridPane.rowIndex="4" />
                   <Label text="Target size" GridPane.rowIndex="5" />
-                  <ComboBox fx:id="aspectCombo" editable="true" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" />
+                  <ComboBox fx:id="aspectCombo" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" />
                   <Slider fx:id="rangeSlider" blockIncrement="1.0" majorTickUnit="1.0" max="25.0" maxWidth="1.7976931348623157E308" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" />
                   <Slider fx:id="targetSizeSlider" blockIncrement="1.0" majorTickUnit="1.0" max="2.0" min="-2.0" minorTickCount="0" showTickLabels="true" showTickMarks="true" snapToTicks="true" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                </children>
@@ -74,13 +75,18 @@
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                </VBox.margin>
             </GridPane>
-            <TableView fx:id="weaponsView" prefHeight="200.0" prefWidth="200.0">
+            <TableView fx:id="weaponsView" editable="true" prefHeight="200.0" prefWidth="200.0">
+                <placeholder>
+                    <Label text="Nothing is in both range and arc!"/>
+                </placeholder>
               <columns>
+                  <TableColumn id="mountCol" fx:id="mountCol" editable="false" maxWidth="-1.0" minWidth="100.0" prefWidth="-1.0" text="Mount" />
                 <TableColumn fx:id="weaponCol" editable="false" maxWidth="-1.0" minWidth="100.0" prefWidth="-1.0" text="Weapon" />
-                <TableColumn fx:id="mountCol" maxWidth="-1.0" minWidth="100.0" prefWidth="-1.0" text="Mount" />
-                  <TableColumn fx:id="accuracyCol" maxWidth="-1.0" minWidth="100.0" prefWidth="-1.0" text="Accuracy" />
-                  <TableColumn fx:id="baseDmgCol" maxWidth="-1.0" minWidth="150.0" prefWidth="-1.0" text="Base Damage" />
-                  <TableColumn fx:id="maxDmgCol" maxWidth="1.7976931348623157E308" minWidth="150.0" prefWidth="-1.0" text="Maximum Damage" />
+
+                  <TableColumn fx:id="accuracyCol" editable="false" maxWidth="-1.0" minWidth="100.0" prefWidth="-1.0" text="Accuracy" />
+                  <TableColumn fx:id="baseDmgCol" editable="false" maxWidth="-1.0" minWidth="150.0" prefWidth="-1.0" text="Base Damage" />
+                  <TableColumn fx:id="maxDmgCol" editable="false" maxWidth="-1.0" minWidth="150.0" prefWidth="-1.0" text="Maximum Damage" />
+                  <TableColumn fx:id="fireCol" maxWidth="1.7976931348623157E308" minWidth="150.0" prefWidth="-1.0" text="Fire?" />
               </columns>
             </TableView>
             <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" side="LEFT" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
