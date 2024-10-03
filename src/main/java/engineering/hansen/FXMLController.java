@@ -2,7 +2,7 @@ package engineering.hansen;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -58,13 +58,7 @@ public class FXMLController {
     private final HashMap<String, HashMap<String, Ship>> shipsBySetting = new HashMap<>();
     private final Pattern bearingPattern = Pattern.compile("^\\s*([0-6]),\\s*(\\d+)\\s*$");
     private final ObservableList<DataRow> ol = FXCollections.observableArrayList();
-    private final ChangeListener<Boolean> cl = new ChangeListener<>() {
-
-        @Override
-        public void changed(ObservableValue<? extends Boolean> observableValue, Boolean aBoolean, Boolean t1) {
-            updateScript();
-        }
-    };
+    private final ChangeListener<Boolean> cl = (_, _, _) -> updateScript();
 
     public static void crashNicely(String title, String header, String content) {
         content += "\n\nClick 'Close' to exit.";
@@ -131,37 +125,43 @@ public class FXMLController {
                 Arrays.stream(w.getAttributes()).forEach(x -> attrs.get(w.getName()).add(x));
             }
 
-        if (weaponsView.getItems().filtered(DataRow::getFire).size() == 0) {
+        if (weaponsView.getItems().filtered(DataRow::getFire).isEmpty()) {
             scriptWebView.getEngine().loadContent("<html><head><title>Script</title></head><body></body></html>");
             return;
         }
 
-        var tmpl = """
-  <html>
+        StringBuilder tmpl = new StringBuilder("""
+<html>
   <head>
     <title>Spoken script</title>
   </head>
   <body>
     <h2 style='text-align: center;'>Are you ready to receive?</h2>
     <p>
-      My <i>""" + shipCombo.getSelectionModel().getSelectedItem() +
-                "</i>-class vessel is practicing pro-active retribution on your " +
-                aspectCombo.getSelectionModel().getSelectedItem().toLowerCase() +
-                " with the following weapons:" + """
-    </p>
-    <ol>""";
+      My <i>""");
+        tmpl.append(shipCombo.getSelectionModel().getSelectedItem())
+                .append("</i>-class vessel is practicing pro-active retribution on your ")
+                .append(aspectCombo.getSelectionModel().getSelectedItem().toLowerCase())
+                .append(" with the following weapons:")
+                .append("\n    </p>\n    <ol>");
         for (var row: weaponsView.getItems().filtered(DataRow::getFire)) {
-            tmpl += "      <li>" + row.getWeapon() + ", hits on a " +
-                    (row.getAccuracy() + (int) targetSizeSlider.getValue()) +
-                    "-plus, damage " + row.getDamage() + ", maximum penetration " +
-                    row.getPenetration() + ".";
+            tmpl.append("      <li>")
+                    .append(row.getWeapon())
+                    .append(", hits on a ")
+                    .append(row.getAccuracy() + (int) targetSizeSlider.getValue())
+                    .append("-plus, damage ")
+                    .append(row.getDamage())
+                    .append(", maximum penetration ")
+                    .append(row.getPenetration()).append(".");
             var attrSet = attrs.get(row.getWeapon());
-            if (!attrSet.isEmpty())
-                tmpl += "  It has the attributes ‘" + String.join(", ", attrSet) + "’.";
-            tmpl += "</li>\n";
+            if (!attrSet.isEmpty()) {
+                if (attrSet.size() == 1) tmpl.append("  It has the attribute ‘");
+                else tmpl.append("  It has the attributes ‘");
+                tmpl.append(String.join(", ", attrSet)).append("’.</li>\n");
+            }
         }
-        tmpl += "    </ol>\n  </body>\n</html>";
-        scriptWebView.getEngine().loadContent(tmpl);
+        tmpl.append("    </ol>\n  </body>\n</html>");
+        scriptWebView.getEngine().loadContent(tmpl.toString());
     }
 
     private void updateUI() {
@@ -174,13 +174,9 @@ public class FXMLController {
         var col = Integer.parseInt(matcher.group(2));
         if (row < 0 || row > 6) return;
         switch (row) {
-            case 0: if (col != 0) return; break;
-            case 1: if (! (col >= 0 && col < 6)) return; break;
-            case 2: if (! (col >= 0 && col < 12)) return; break;
-            case 3: if (! (col >= 0 && col < 12)) return; break;
-            case 4: if (! (col >= 0 && col < 12)) return; break;
-            case 5: if (! (col >= 0 && col < 6)) return; break;
-            case 6: if (col != 0) return; break;
+            case 0, 6: if (col != 0) return; else break;
+            case 1, 5: if (! (col >= 0 && col < 6)) return; else break;
+            case 2, 3, 4: if (! (col >= 0 && col < 12)) return; else break;
             default: return;
         }
 
@@ -196,14 +192,8 @@ public class FXMLController {
             for (var w: m.getWeapons()) {
                 var rb = w.getRangeBandFor(range);
                 if (rb == null) continue;
-
-                String mountName = m.getName();
-                String weaponName = w.getName();
-                int acc = rb.getAccuracy();
-                int dmg = rb.getDamage();
-                int pen = rb.getPenetration();
-                boolean fire = false;
-                var dr = new DataRow(mountName, weaponName, acc, dmg, pen, fire);
+                var dr = new DataRow(m.getName(), w.getName(), rb.getAccuracy(),
+                        rb.getDamage(), rb.getPenetration(),false);
                 dr.fireProperty().addListener(cl);
                 ol.add(dr);
             }
@@ -230,9 +220,9 @@ public class FXMLController {
         baseDmgCol.setCellValueFactory(new PropertyValueFactory<>("damage"));
         maxDmgCol.setCellValueFactory(new PropertyValueFactory<>("penetration"));
         fireCol.setCellValueFactory(new PropertyValueFactory<>("fire"));
-        fireCol.setCellFactory( tc -> new CheckBoxTableCell<>());
+        fireCol.setCellFactory( _ -> new CheckBoxTableCell<>());
 
-        settingCombo.setOnAction(event -> {
+        settingCombo.setOnAction(_ -> {
             var index = settingCombo.getSelectionModel().getSelectedIndex();
             if (index == lastSettingIndex) return;
             lastSettingIndex = index;
@@ -242,33 +232,27 @@ public class FXMLController {
             shipCombo.getSelectionModel().select(0);
             updateUI();
         });
-        shipCombo.setOnAction(event -> {
+        shipCombo.setOnAction(_ -> {
             var index = shipCombo.getSelectionModel().getSelectedIndex();
             if (index == lastShipIndex) return;
             lastShipIndex = index;
             updateUI();
         });
-        bearingField.setOnAction(event -> {
+        bearingField.setOnAction(_ -> {
             var matcher = bearingPattern.matcher(bearingField.getText());
             if (! matcher.matches()) return;
             updateUI();
         });
-        rangeSlider.valueProperty().addListener(((observable, oldNum, newNum) -> {
+        rangeSlider.valueProperty().addListener(((_, _, newNum) -> {
             if (newNum.intValue() == lastRange) return;
             lastRange = newNum.intValue();
             updateUI();
         }));
-        targetSizeSlider.valueProperty().addListener(((observable, oldNum, newNum) -> {
+        targetSizeSlider.valueProperty().addListener(((_, _, newNum) -> {
             if (newNum.intValue() == lastTargetSize) return;
             lastTargetSize = newNum.intValue();
             updateUI();
         }));
-        aspectCombo.setOnAction(event -> {
-            updateUI();
-        });
-    }
-
-    public void exit() {
-        Platform.exit();
+        aspectCombo.setOnAction(_ -> updateUI());
     }
 }
